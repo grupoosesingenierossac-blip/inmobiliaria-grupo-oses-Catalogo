@@ -87,15 +87,16 @@
                 if (SI(t.negrita)) d.style.fontWeight = "700"; if (t.fondo && t.fondo !== "transparent") d.style.background = t.fondo;
             }
         }));
-        scenes[e.idEscena] = def({ title: e.nombreMenu, type: "equirectangular", panorama: drive(e.imagen360),
+        scenes[e.idEscena] = def({ title: e.nombreMenu, type: "equirectangular", panorama: drive(e.imagen360, (window.CONFIG || {}).PANORAMA_ANCHO),
             pitch: num(e.pitchInicial), yaw: num(e.yawInicial), hfov: num(e.hfovInicial) || 100, hotSpots: hs });
     });
     function scenesIds() { return p.escenas.map(e => e.idEscena); }
 
     const primera = scenes[p.escenaInicial] ? p.escenaInicial : p.escenas[0].idEscena;
     const ui = p.ui || {};   // hoja UIConfig (opcional)
+    const hfovMinFinal = x => { const s = (window.CONFIG || {}).HFOV_MIN_SEGURO || 0; return (x == null && !s) ? undefined : Math.max(x || 0, s); };
     const ajustes = def({
-        minHfov: num(ui.hfovMin), maxHfov: num(ui.hfovMax),
+        minHfov: hfovMinFinal(num(ui.hfovMin)), maxHfov: num(ui.hfovMax),
         showZoomCtrl: ui.zoomVisible ? SI(ui.zoomVisible) : undefined,
         showFullscreenCtrl: ui.fullscreenVisible ? SI(ui.fullscreenVisible) : undefined
     });
@@ -119,12 +120,21 @@
         });
     }
 
-    // Brújula (propia, sin imágenes externas)
+    // Brújula: si el Excel trae imagenBrujula (BrujulaConfig) se usa esa imagen; si no, la brújula dibujada por defecto.
     const b = p.brujula || {};
-    if (b.visible && !SI(b.visible)) $("brujulaUI").style.display = "none";
-    $("brujulaUI").setAttribute("width", num(b["tamaño"]) || 100);
-    if (num(b.top) !== undefined) $("brujulaUI").style.top = b.top + "px";
-    if (num(b.right) !== undefined) $("brujulaUI").style.right = b.right + "px";
+    if (b.imagenBrujula && /\/d\/|[?&]id=|^https?:/i.test(b.imagenBrujula)) {
+        const old = $("brujulaUI"), im = document.createElement("img");
+        im.id = "brujulaUI"; im.alt = "Brújula"; im.src = drive(b.imagenBrujula);
+        im.onerror = () => { old.setAttribute("width", im.getAttribute("width") || 100); old.style.cssText = im.style.cssText; im.replaceWith(old); };   // si la imagen falla, vuelve a la brújula por defecto
+        old.replaceWith(im);
+    }
+    const bu = $("brujulaUI");
+    if (b.visible && !SI(b.visible) || (b.activo && !SI(b.activo))) bu.style.display = "none";
+    bu.setAttribute("width", num(b["tamaño"]) || 100);
+    ["top", "right", "bottom", "left"].forEach(k => { if (num(b[k]) !== undefined) bu.style[k] = b[k] + "px"; });
+    if (num(b.bottom) !== undefined && num(b.top) === undefined) bu.style.top = "auto";
+    if (num(b.left) !== undefined && num(b.right) === undefined) bu.style.right = "auto";
+    if (num(b.opacidad) !== undefined) bu.style.opacity = num(b.opacidad) > 1 ? num(b.opacidad) / 100 : num(b.opacidad);
     const rot0 = num(b.rotacionInicial) || 0;
     (function girar() { $("brujulaUI").style.transform = "rotate(" + (rot0 - v.getYaw()) + "deg)"; requestAnimationFrame(girar); })();
 
