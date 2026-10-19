@@ -9,5 +9,7 @@ window.CONFIG = {
     USAR_RESPALDO: false,
     XLSX_URL: "data/catalogo.xlsx",
 
-    TIMEOUT_MS: 12000
+      TIMEOUT_MS: 12000,
+    PANORAMA_ANCHO: 8192,
+    HFOV_MIN_SEGURO: 40
 };
