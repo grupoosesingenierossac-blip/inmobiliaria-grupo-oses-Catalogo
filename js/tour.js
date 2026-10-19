@@ -87,15 +87,16 @@
                 if (SI(t.negrita)) d.style.fontWeight = "700"; if (t.fondo && t.fondo !== "transparent") d.style.background = t.fondo;
             }
         }));
-        scenes[e.idEscena] = def({ title: e.nombreMenu, type: "equirectangular", panorama: drive(e.imagen360),
+        scenes[e.idEscena] = def({ title: e.nombreMenu, type: "equirectangular", panorama: drive(e.imagen360, (window.CONFIG || {}).PANORAMA_ANCHO),
             pitch: num(e.pitchInicial), yaw: num(e.yawInicial), hfov: num(e.hfovInicial) || 100, hotSpots: hs });
     });
     function scenesIds() { return p.escenas.map(e => e.idEscena); }
 
     const primera = scenes[p.escenaInicial] ? p.escenaInicial : p.escenas[0].idEscena;
     const ui = p.ui || {};   // hoja UIConfig (opcional)
+    const hfovMinFinal = x => { const s = (window.CONFIG || {}).HFOV_MIN_SEGURO || 0; return (x == null && !s) ? undefined : Math.max(x || 0, s); };
     const ajustes = def({
-        minHfov: num(ui.hfovMin), maxHfov: num(ui.hfovMax),
+        minHfov: hfovMinFinal(num(ui.hfovMin)), maxHfov: num(ui.hfovMax),
         showZoomCtrl: ui.zoomVisible ? SI(ui.zoomVisible) : undefined,
         showFullscreenCtrl: ui.fullscreenVisible ? SI(ui.fullscreenVisible) : undefined
     });
